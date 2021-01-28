@@ -1,0 +1,60 @@
+---
+- name: install and configure nginx
+  hosts: minio
+  become: true
+  become_method: sudo
+
+  tasks:
+  - name: install nginx
+    apt:
+      name: nginx
+      update_cache: yes
+      state: latest
+
+  - name: remove default site
+    file:
+      path: "/etc/nginx/sites-enabled/default"
+      state: absent
+
+  - name: upload config
+    copy:
+      src: minio.conf
+      dest: /etc/nginx/conf.d/minio.conf
+
+  - name: restart nginx
+    systemd:
+      state: restarted
+      name: nginx
+
+- name: install minio
+  hosts: minio
+  become: true
+  become_method: sudo
+  vars:
+    minio_volumes:
+      - /export1
+      - /export2
+    minio_env:
+      MINIO_ROOT_USER: DBA9ABECC2AF4B1B9671
+      MINIO_ROOT_PASSWORD: b0ede46eed80458aa545d71349384e33
+
+  tasks:
+  - name: download minio binary
+    get_url:
+      url: "https://dl.minio.io/server/minio/release/linux-amd64/minio"
+      dest: "/usr/local/bin/minio"
+      mode: 0755
+  
+  - name: create export dir
+    file:
+      path: "{{ item | urlsplit('path') }}"
+      state: directory
+      mode: 0755
+    with_items: "{{ minio_volumes }}"
+  
+  - name: start minio
+    shell: "( nohup /usr/local/bin/minio server http://10.2.0.{5...7}/export{1...2} >/var/log/minio.log 2>&1 & )"
+    async: 10
+    poll: 0
+    environment: "{{ minio_env }}"
+

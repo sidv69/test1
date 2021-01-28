@@ -1,0 +1,11 @@
+
+[minio]
+10.2.0.5 ansible_ssh_private_key_file=.vagrant/machines/minio1/virtualbox/private_key
+10.2.0.6 ansible_ssh_private_key_file=.vagrant/machines/minio2/virtualbox/private_key
+10.2.0.7 ansible_ssh_private_key_file=.vagrant/machines/minio3/virtualbox/private_key
+
+[minio1]
+10.2.0.5
+
+[minio:vars]
+ansible_ssh_user=vagrant
